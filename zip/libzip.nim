@@ -47,16 +47,21 @@
 
 import times
 
-when defined(unix) and not defined(useLibzipSrc):
-  when defined(macosx):
-    {.pragma: mydll, dynlib: "libzip(|2|4).dylib".}
-  else:
-    {.pragma: mydll, dynlib: "libzip(|2).so(|.4|.2|.1|.0)".}
-else:
-  when defined(unix):
-    {.passl: "-lz".}
-  {.compile: "zip/private/libzip_all.c".}
+when compileOption("dynlibOverride", "zip"):
+  {.passL: "-lz".}
   {.pragma: mydll.}
+else:
+  when not defined(useLibzipSrc):
+    when defined(macosx):
+      {.pragma: mydll, dynlib: "libzip(|2|4).dylib".}
+    elif defined(linux):
+      {.pragma: mydll, dynlib: "libzip(|2).so(|.4|.2|.1|.0)".}
+    elif defined(windows):
+      {.pragma: mydll, dynlib: "libzip.dll".}
+  else:
+    {.passL: "-lz".}
+    {.compile: "zip/private/libzip_all.c".}
+    {.pragma: mydll.}
 
 type
   ZipSourceCmd* = int32
